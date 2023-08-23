@@ -41,27 +41,30 @@ Their work is based on dependent intersection types, of which we are making
 a poor man's version using SProp here.
 
 Remark: Because I felt like having fun, there will be universe level trickery!
-The side-challenge was to show that this is not a problem some inherent of
-(im)predicativity of church encodings, so I took the predicative encoding of
-natural numbers: `∀ X : Type, X → (X → X) → X`. Since `Type` is a predicative
-hierachy, there is a hidden level. Usually this is not a problem since Coq has
+The side-challenge was to show that the "inherent" impredicativity of church
+encodings is not so problematic. So I took a predicative version of the
+encoding of natural numbers: `∀ X : Type, X → (X → X) → X`. Since `Type` is
+a predicative hierachy, there is a hidden level and this is actually
+a level-polymorphic definition. Usually this is not a problem since Coq has
 a default hidden method for handling level constraints: We write everything as
 if `Type` was impredicative while everything is sorted out behind the scenes.
-In this file however, we will do some brutal "pseudo self-instanciation" so
-I went with the manual universe management. Using `Set Printing Universes` is
-encouraged to understand what is going on: I am using pretty cursed coercions
-and have elided annotations where Coq could infer the proper ones!
+In this file however, we will do some brutal "pseudo self-instanciation"
+(instanciation of the encoding with itself at a lower level) so I went with
+the manual universe management. Adding the `Set Printing Universes.` and `Set
+Printing Coercions.` flags is encouraged to understand what is going on: I am
+using pretty cursed coercions and have elided annotations where Coq could
+infer the proper ones!
 |*)
 Set Universe Polymorphism.
 (*|
 Maybe it would have been more idiomatic in Coq to embrace impredicativity and
 replace `Type` by `Set` (using the coq option `-impredicative-set`) this is
-what I do in the file `nat-set.v` and `poly-set.v`.
+what I do in the file `nat-set.v`.
 
 Prelude
 -------
 
-We start of by a very minimal prelude defining the usual inductive identity
+We start off with a very minimal prelude defining the usual inductive identity
 type, but in the universe `SProp`.
 |*)
 Inductive eq_s@{i} (A : Type@{i}) (x : A) : A -> SProp :=
@@ -178,5 +181,5 @@ Lemma nat_ind@{i j | j < i} (P : nat@{j} -> SProp)
       (pz : P ze) (ps : forall n, P n -> P (su n))
       (n : nat@{i}) : P n .
   apply (eq_subst P nat_recompute).
-  exact (n.(ind) (fun x => P (nat_mk x)) pz (fun _ p => ps _ p)).
+  exact (n.(ind) (fun x => P (nat_mk x)) pz (fun n => ps (nat_mk n))).
 Qed.

@@ -1,3 +1,9 @@
+(*|
+This file follows the exact same pattern as `nat.v`. Instead of the
+predicativity and level-polymorphisms this version uses the simpler
+impredicative `Set` universe. Be sure to call coq with the option
+`-impredicative-set` to typecheck.
+|*)
 Inductive eq_s (A : Type) (x : A) : A -> SProp :=
 | eq_refl : eq_s A x x.
 Arguments eq_refl {A x}.
