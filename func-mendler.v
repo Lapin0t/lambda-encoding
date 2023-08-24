@@ -1,4 +1,35 @@
-From Equations Require Import Equations.
+(*|
+This file contains a derivation of induction for arbitrary functor-like
+mappings. While the broad structure is similar to `nat.v`, the precise
+derivation follows another route than the recomputation lemma and is closer in
+spirit to Denis Firsov, Richard Blair, and Aaron Stump, "Efficient
+Mendler-Style Lambda-Encodings in Cedille".
+
+I say "functor-like" because in fact we do not ask that the mapping be
+a functor in the usual sense, but instead ask for a notion of predicate
+lifting, that is a notion of "for all parts (x : X) of some (u : F X)". To be
+the most general I do this for the category of set families indexed by some
+`I : Type`, hence this is a derivation of induction for "inductive families".
+
+The encoding is not a Church-encoding, but a Mendler-style encoding, which
+Firsov et al claim is more efficient (still a linear space requirement while
+admitting constant-time destructors). This Mendler-style encoding is at heart
+the same co-Yoneda trick as in the "freeer monad" construction.
+
+Because of specificities of Coq vs Cedille, I do not believe we can get these
+constant-time destructors. Indeed the constant-time destructors is computed
+using the induction principle. Alas our induction principle only accepts
+predicates valued in SProp, while the output of the destructor should live is
+Set. We could certainly compute an SProp-truncated destructor, but this would
+barely be useful. We could also replace every use of Set with SProp, bridging
+the gap the other way, but having everything in SProp would make the
+computational characteristics of the destructor irrelevant since it is pure
+logic and runtime-erased anyway. I believe this works in Cedille because they
+have a primitive subset type where the "proof" component doesn't have to be in
+an irrelevant universe (while still being irrelevant for equality of the
+elements of the subset) and consequently the induction hypothesis can accept
+larger predicates.
+|*)
 Set Primitive Projections.
 Inductive eq_s (A : Type) (x : A) : A -> SProp :=
 | eq_refl : eq_s A x x .
@@ -61,8 +92,7 @@ These maps look like an intensional form of what Aaron Stump et al call
 which themselves look like an intensional version of injections/monos.
 
 Predicates on `X` are represented categorically as slices `(Y : ISet I , Y ↪ X)`.
-Given a `P : IPred X`, this representation is given by `(subset X P , elt)
-`.
+Given a `P : IPred X`, this representation is given by `(subset X P , elt)`.
 |*)
 Class PredLift {I} (F : ISet I -> ISet I) := {
   (* the predicate lift itself *)
@@ -90,10 +120,8 @@ Section church.
 (*|
 "Mendler-style" algebra. This is a kind of dual-CPS (sometimes called
 "environment-passing style") and is in fact an algebra for the functor
-`λ X ↦ ∃ R : ISet I, (R ⇒ X) × (F R)`, which is the left kan extension
-of `F` along the inclusion `Disc (ISet I) ↪ ISet I`. In case `F` is
-already a functor this is isomorphic to `F` (switching the exists with a
-coend). Cf "freeer monad".
+`λ X ↦ ∃ R : ISet I, (R ⇒ X) × (F R)`, which i believe is the left kan
+extension of `F` along the inclusion `Disc (ISet I) ↪ ISet I`.
 |*)
   Definition AlgM (X : ISet I) : Set
     := forall R : ISet I, (R ⇒ X) -> F R ⇒ X .
